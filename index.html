@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Guess the 5-letter Country</title>
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <div class="content">
+        <table>
+            <tbody id="board">
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="input-container">
+            <label for="word" class="user-input">Your Word: </label>
+            <input type="text" maxlength="5" minlength="5" id="word">
+            <button class="submit">Enter!</button>
+        </div>
+        <p id="game-over"></p>
+        <button class="reset">RESTART!</button>
+    </div>
+</div>
+</body>
+<script>
+    const wordList = [
+        "Benin",
+        "Egypt",
+        "Gabon",
+        "Ghana",
+        "Kenya",
+        "Libya",
+        "Niger",
+        "Sudan",
+        "Chile",
+        "China",
+        "Haiti",
+        "India",
+        "Italy",
+        "Japan",
+        "Malta",
+        "Nauru",
+        "Nepal",
+        "Palau",
+        "Qatar",
+        "Samoa",
+        "Spain",
+        "Syria",
+        "Tonga",
+        "Yemen",] //Yemen is at index 23, when the length of the array is 24
+
+    const randomizeWord  = list => list[Math.floor(Math.random() * (wordList.length - 1))];
+    let answer = randomizeWord(wordList).toUpperCase();
+    console.log(answer);
+
+    const body = document.querySelector('body');
+    const board = document.getElementById('board');
+    const textBox = document.querySelector('input');
+    const inputContainer = document.querySelector('.input-container')
+    const submitButton = document.querySelector('.submit');
+    const resetButton = document.querySelector('.reset');
+    const gameOverMessage = document.getElementById('game-over');
+    console.log(board.children.length);
+    const clearBoard = () => {
+        for (let i = 0; i < board.children.length; i++){
+            let currentRow = board.children[i];
+            for (let k = 0; k < 5; k++){
+                let square = currentRow.children[k];
+                square.textContent = "";
+                square.classList.remove('incorrect');
+                square.classList.remove('correct');
+                square.classList.remove('in-word');
+            }
+        }
+    }
+    let currentGuessNumber = 0;
+    resetButton.addEventListener('click', function() {
+        currentGuessNumber = 0;
+        textBox.value = "";
+        gameOverMessage.textContent = '';
+        answer = randomizeWord(wordList).toUpperCase();
+        inputContainer.style.display = 'block';
+        console.log('New Answer:', answer);
+        body.classList.remove('incorrect');
+        body.classList.remove('correct');
+        body.classList.remove('in-word');
+        body.classList.remove('failed');
+        clearBoard();
+        textBox.focus();
+    })
+
+    const submitGuess = () => {
+        let guess = textBox.value;
+        textBox.value = "";
+
+        if (guess.length !== 5) {
+            return //Do not accept words that are not 5 letters long
+        }
+
+        //render guess to the board
+        writeGuess(guess)
+
+        currentGuessNumber++
+
+        //check for win
+        if (guess.toUpperCase() === answer.toUpperCase()) {
+            gameOverMessage.textContent = 'You found the country!!!';
+            inputContainer.style.display = 'none';
+            return
+        } else {
+            textBox.focus();
+        }
+
+        //check for loss
+        if (currentGuessNumber >= board.children.length) {
+            gameOverMessage.textContent = `You lost, the country was ${answer}`;
+            body.classList.add('failed');
+            inputContainer.style.display = 'none';
+        }
+    }
+
+    submitButton.addEventListener('click', submitGuess);
+    document.addEventListener('keyup', function(e){
+        if (e.key === 'Enter'){
+            submitGuess();
+        }
+    });
+
+    function writeGuess(guess) {
+        //build our match array so we easily see what matches
+        let matchArray = buildMatchArray(guess)
+        console.log(matchArray);
+        if (matchArray.includes(1)){
+            body.classList.remove('incorrect');
+            body.classList.add('in-word');
+        } else if (!matchArray.includes(1) && !matchArray.includes(2)){
+            body.classList.remove('in-word');
+            body.classList.add('incorrect');
+        } else if (!matchArray.includes(0) && !matchArray.includes(1)){
+            body.classList.remove('incorrect');
+            body.classList.remove('in-word');
+            body.classList.add('correct');
+        }
+        //identify the current tr tag
+        let currentGuessRow = board.children[currentGuessNumber];
+        //identify the column for each letter in that row
+        let columns = currentGuessRow.children
+
+        for (let i = 0; i < matchArray.length; i++) {
+            for (let i = 0; i < matchArray.length; i++) {
+                let column = columns[i];
+                column.textContent = guess[i].toUpperCase();
+
+                if (matchArray[i] === 2) {
+                    column.classList.add('correct'); //perfect match
+                } else if (matchArray[i] === 1) {
+                    column.classList.add('in-word'); //in word, wrong spot
+                } else {
+                    column.classList.add('incorrect'); //no match
+                }
+            }
+        }
+    }
+
+    function buildMatchArray(guess){
+        guess = guess.toUpperCase();
+        let answerAsArray = [];
+        let matchArray = [0,0,0,0,0]; //assume no match to start
+        for (let i = 0; i < answer.length; i++){
+            let letter = answer[i].toUpperCase();
+            answerAsArray.push(letter);
+        }
+        //find exact matches
+        for (let i = 0; i < guess.length; i++){
+            let letter = guess[i];
+            if (letter === answer[i]){
+                answerAsArray[i] = null; //remove letter to prevent matching it as yellow, too
+                matchArray[i] = 2 //indicate that a match was found
+            }
+        }
+        //find in-word matches and misses
+        for(let i = 0; i <guess.length; i++){
+            let letter = guess[i];
+            let index = answerAsArray.indexOf(letter);
+
+            //if letter not in remaining letters, move on to next letter
+            if (index === -1){
+                continue
+            }
+
+            //remove letter to prevent matching in other positions
+            answerAsArray[index] = null;
+            //mark it yellow as it is in the word but not in the correct spot
+            matchArray[i] = 1;
+        }
+        return matchArray
+    }
+
+</script>
+</html>
